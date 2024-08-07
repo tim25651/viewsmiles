@@ -1,4 +1,4 @@
-# viewsmiles README
+# viewsmiles
 
 Hello!
 
