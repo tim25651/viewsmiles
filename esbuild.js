@@ -45,6 +45,7 @@ async function main() {
     bundle: true,
     format: 'cjs',
     minify: production,
+    // keepNames: true, // comment out for production
     sourcemap: !production,
     sourcesContent: false,
     platform: 'node',

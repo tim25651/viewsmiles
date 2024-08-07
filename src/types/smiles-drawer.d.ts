@@ -2,8 +2,9 @@ declare module 'smiles-drawer' {
     export module Parser {
         export function parse(smiles: string, options: Object): Object;
     }
+
     export class SvgDrawer {
-        constructor(options: Object, clear: Boolean);
+        constructor(options: Object, clear?: Boolean);
 
         /**
          * Draws the parsed smiles data to an svg element.
@@ -20,6 +21,11 @@ declare module 'smiles-drawer' {
          */
         draw(data: Object, target: string | SVGElement, themeName: string, weights?: (Object|null), infoOnly?: boolean
             , highlight_atoms?: Array<number>, weightsNormalized?: boolean): SVGElement;
+    }
 
+    export class SvgWrapper {
+        constructor(themeManager: any, target: String|SVGElement, options: Object, clear?: Boolean);
+            
+        static measureText(text: string, fontSize: number, fontFamily: string, lineHeight?: number): Object | null;
     }
 }

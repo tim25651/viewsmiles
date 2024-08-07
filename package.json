@@ -2,10 +2,10 @@
   "name": "viewsmiles",
   "displayName": "ViewSMILES",
   "description": "Hover over SMILES strings in your codebase and it renders the structural formulae.",
-  "publisher": "tim25651",
+  "publisher": "audivir",
   "icon": "images/icon.png",
   "license": "MIT",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.92.0"
   },
@@ -45,7 +45,7 @@
   },
   "scripts": {
     "compile": "npm run check-types && node esbuild.js",
-    "check-types": "tsc --noEmit",
+    "check-types": " ./node_modules/.bin/electron-rebuild -v 30.1.2 && tsc --noEmit",
     "watch": "npm-run-all -p watch:*",
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",

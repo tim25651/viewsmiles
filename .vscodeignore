@@ -13,9 +13,5 @@ vsc-extension-quickstart.md
 README.md
 LICENSE
 node_modules
-# !node_modules/punycode
-# !node_modules/smiles-drawer
-# !node_modules/chroma-js
-!node_modules/canvas
-# !node_modules/jsdom
-# !node_modules/tough-cookie
+xhr_fix.sh
+out
