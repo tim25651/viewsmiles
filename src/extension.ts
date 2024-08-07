@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
 import * as smidrawer from 'smiles-drawer';
+import * as canvas from 'canvas'; // needs to imported before jsdom
+import * as jsdom from 'jsdom';
 
-async function importSvgDom() {
-    const svgdom = await import('svgdom');
-    console.log("svgdom imported;");
-    return svgdom;
-}
+// ignore the following error for compilation
+// @ts-ignore
+global.HTMLCanvasElement = canvas.Canvas;
 
 export function activate(context: vscode.ExtensionContext) {
     const provider = vscode.languages.registerHoverProvider('python', {
@@ -15,57 +15,70 @@ export function activate(context: vscode.ExtensionContext) {
                 const smiles = document.getText(range).slice(1, -1);
                 if (/^[A-Za-z0-9@+\-\[\]\(\)=#$]{1,}$/.test(smiles)) {
                     return new Promise<vscode.Hover | null>((resolve) => {
-                        
+
+                        // works
+                        // vscode setting to enable/disable kekule
+
+                        const kekule: boolean = vscode.workspace.getConfiguration('viewsmiles').get('kekule', false);
+                        console.log("kekule?", kekule);
 
                         let parseTree = null;
+
+                        if (kekule) {
+                            resolve(new vscode.Hover(new vscode.MarkdownString("Kekule is not implemented yet")));
+                        } else {
                             try {
                                 parseTree = smidrawer.Parser.parse(smiles, {});
                             }
-                            catch (e) { 
+                            catch (e) {
                                 // invalid smiles
                                 // do not log as it will be too noisy
                                 // maybe environment variable to enable logging?
-                                    }
+                            }
                             if (parseTree === null) {
                                 resolve(null);
                                 return;
                             }
-                            
-                            console.log(parseTree);
+                        }
 
-                            importSvgDom().then((svgdom) => {
+                        if (parseTree === null) {
+                            throw new Error("parseTree is null");
+                        }
 
-                                // set the SVG document to be used by the drawer
-                                global.document = svgdom.createSVGDocument();
+                        console.log(parseTree);
 
-                                // create a new drawer
-                                const opts = {width: 200, height: 200};
-                                const drawer = new smidrawer.SvgDrawer(opts, true);
-                                
-                                // get the current theme
-                                const vsCodeTheme = vscode.window.activeColorTheme.kind;
-                                // if 1 or 4, it's light theme
-                                // if 2 or 3, it's dark theme
-                                const theme = vsCodeTheme === 1 || vsCodeTheme === 4 ? 'light' : 'dark';
+                        global.document = new jsdom.JSDOM().window.document;
 
-                                // draw the molecule from the parse tree
-                                const svg: SVGElement = drawer.draw(parseTree, "svg", theme, null, false);
+                        // create a new drawer
+                        const opts = { width: 200, height: 200 };
+                        const drawer = new smidrawer.SvgDrawer(opts, true);
 
-                                // so we don't need to scroll to see the whole image
-                                svg.style.maxWidth = '100%';
-                                svg.style.maxHeight = '100%';
+                        // get the current theme
+                        const vsCodeTheme = vscode.window.activeColorTheme.kind;
+                        // if 1 or 4, it's light theme
+                        // if 2 or 3, it's dark theme
+                        const theme = vsCodeTheme === 1 || vsCodeTheme === 4 ? 'light' : 'dark';
 
-                                // convert the svg element to a data uri
-                                const imageUri = `data:image/svg+xml,${encodeURIComponent(svg.outerHTML)}`;
-                                console.log(imageUri);
-                                const markdownString = new vscode.MarkdownString(`![structure](${imageUri})`);
-                                markdownString.isTrusted = true;
-
-                                // return the hover
-                                resolve(new vscode.Hover(markdownString));
-                            });
-                            
+                        console.log("theme", theme);
                         
+                        // draw the molecule from the parse tree
+                        const svg: SVGElement = drawer.draw(parseTree, "svg", theme, null, false);
+
+                        // so we don't need to scroll to see the whole image
+                        svg.style.maxWidth = '100%';
+                        svg.style.maxHeight = '100%';
+
+                        // convert the svg element to a data uri
+                        const imageUri = `data:image/svg+xml,${encodeURIComponent(svg.outerHTML)}`;
+                        console.log(imageUri);
+                        const markdownString = new vscode.MarkdownString(`![structure](${imageUri})`);
+                        markdownString.isTrusted = true;
+
+                        // return the hover
+                        resolve(new vscode.Hover(markdownString));
+
+
+
                     });
                 }
             }
@@ -76,4 +89,4 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(provider);
 }
 
-export function deactivate() {}
+export function deactivate() { }
