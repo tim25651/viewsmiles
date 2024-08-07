@@ -3,6 +3,8 @@ import * as smidrawer from 'smiles-drawer';
 import * as jsdom from 'jsdom';
 import * as canvas from 'canvas';
 
+console.log("viewsmiles version 0.0.3");
+
 const cache = new Map<string, string>();
 var logged_canvas_not_found = false;
 
@@ -12,11 +14,31 @@ function measureText(text: string, fontSize: number, fontFamily: string, lineHei
     let temp_element = null;
     try {
         temp_element = canvas.createCanvas(300, 150); // default size from chromium
-    }
-    catch (e) {
+    } catch (e) {
         // we want to log this only once
         if (!logged_canvas_not_found) {
+            // @ts-ignore
+            console.log(canvas.default.createCanvas);
+            console.log('Properties of canvas module:');
+            for (const key in canvas) {
+            if (canvas.hasOwnProperty(key)) {
+                // @ts-ignore
+                console.log(`${key}:`, canvas[key]);
+            }
+            }
+            // @ts-ignore
+            const def = canvas.default;
+            console.log('Properties of canvas.default module:');
+            for (const key in def) {
+            if (canvas.hasOwnProperty(key)) {
+                console.log(`${key}:`, def[key]);
+            }
+            }
+            
             console.log("canvas not found: disable bounding box, could lead to cut off atoms");
+            console.log("canvas:", canvas);
+            console.log("canvas.createCanvas:", canvas.createCanvas);
+            console.log("error:", e);
             logged_canvas_not_found = true;
         }
     }

@@ -44,13 +44,13 @@ async function main() {
     entryPoints: ['src/extension.ts'],
     bundle: true,
     format: 'cjs',
-    minify: production,
-    // keepNames: true, // comment out for production
+    minify: false, // production,
+    keepNames: true, // comment out for production
     sourcemap: !production,
     sourcesContent: false,
     platform: 'node',
     outfile: 'dist/extension.js',
-    external: ['vscode'],
+    external: ['vscode', 'canvas'],
     logLevel: 'silent',
     plugins: [
       /* add to the end of plugins array */

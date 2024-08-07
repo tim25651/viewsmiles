@@ -5,7 +5,7 @@
   "publisher": "audivir",
   "icon": "images/icon.png",
   "license": "MIT",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "engines": {
     "vscode": "^1.92.0"
   },

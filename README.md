@@ -17,6 +17,10 @@ Initial release of viewsmiles. Doesn't work on other computers than mine. See TO
 First workaround for canvas via try-catch. Still not fully functional. See TODO.
 Implemented simple Map cache for SMILES strings.
 
+### 0.0.3
+
+More fixes to the canvas issue.
+
 **Enjoy!**
 
 ## TODO
