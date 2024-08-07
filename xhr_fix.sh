@@ -9,15 +9,43 @@ else
 fi
 
 function edit() {
-    pattern=$1
-    lineno=$2
-    file=$3
-    sed -i '' "${lineno}s/^${pattern}//" "$file"
-    sed -i '' "${lineno}s/^/${pattern}/" "$file"
-    if [ $verbose -eq 1 ]; then
-        echo "edited line $lineno in file $file"
+    local pattern=$1
+    local lineno=$2
+    local file=$3
+    local verbose=${verbose:-0}  # Default to 0 if not set
+
+    # Check if file exists
+    if [ ! -f "$file" ]; then
+        echo "Error: File $file not found."
+        return 1
+    fi
+
+    # Check if line number is valid
+    if ! [[ "$lineno" =~ ^[0-9]+$ ]] || [ "$lineno" -le 0 ]; then
+        echo "Error: Invalid line number $lineno."
+        return 1
+    fi
+
+    # check if linux
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        # Remove and then add the pattern
+        sed -i "${lineno}s/^${pattern}//" "$file"
+        sed -i "${lineno}s/^/${pattern}/" "$file"
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        # Remove and then add the pattern
+        sed -i '' "${lineno}s/^${pattern}//" "$file"
+        sed -i '' "${lineno}s/^/${pattern}/" "$file"
+    else
+        echo "Error: Unsupported OS $OSTYPE."
+        return 1
+    fi
+
+    # Verbose output
+    if [ "$verbose" -eq 1 ]; then
+        echo "Edited line $file:$lineno"
     fi
 }
+
 function comment() {
     lineno=$1
     file=$2
@@ -50,7 +78,13 @@ edit "}" 701 node_modules/smiles-drawer/src/SvgWrapper.js
 edit "}" 723 node_modules/smiles-drawer/src/SvgWrapper.js
 
 # edit app.js
-import_str="const SvgWrapper = require('\.\/src\/SvgWrapper');"
+import_str="const SvgWrapper = require('.\/src\/SvgWrapper');"
+add_str="SmilesDrawer.SvgWrapper = SvgWrapper;"
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # escape the dots
+    import_str="const SvgWrapper = require('.\/src\/SvgWrapper');"
+    add_str="SmilesDrawer.SvgWrapper = SvgWrapper;"
+fi
+
 edit "$import_str" 9 node_modules/smiles-drawer/app.js
-add_str="SmilesDrawer\.SvgWrapper = SvgWrapper;"
 edit "$add_str" 27 node_modules/smiles-drawer/app.js
