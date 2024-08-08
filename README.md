@@ -19,7 +19,8 @@ Implemented simple Map cache for SMILES strings.
 
 ### 0.0.3
 
-More fixes to the canvas issue.
+Implement a approximation for the bounding boxes if canvas is not available. Still not fully functional. Canvas works if the vsix is built on the same computer and 
+all dependencies are installed. It doesn't work on other computers or via SSH.
 
 **Enjoy!**
 

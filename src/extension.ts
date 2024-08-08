@@ -3,59 +3,129 @@ import * as smidrawer from 'smiles-drawer';
 import * as jsdom from 'jsdom';
 import * as canvas from 'canvas';
 
+const errorMap = {
+    C: {width: 0.1808000000000001, height: 0.23690289887472993},
+    O: {width: 0.23197818119832958, height: 0.23739112478715807},
+    N: {width: 0.1691683569979717, height: 0.22384151593453921},
+    P: {width: 0.14374762447738512, height: 0.22384151593453921},
+    S: {width: 0.1004093041828892, height: 0.23690289887472993},
+    Si: {width: 0.3495881383855023, height: 0.23690289887472993},
+    F: {width: 0.0725401399752986, height: 0.22384151593453921},
+    Na: {width: 0.08538949505201736, height: 0.22384151593453921},
+    Se: {width: 0.02163834753813594, height: 0.23690289887472993},
+    Cl: {width: -0.27070436437989126, height: 0.23690289887472993},
+    I: {width: -1.1328284023668636, height: 0.22384151593453921},
+    Br: {width: -0.10411076395270463, height: 0.22384151593453921},
+    Mg: {width: 0.14068564344633586, height: 0.22384151593453921},
+    K: {width: 0.1873015873015874, height: 0.22384151593453921},
+    H: {width: 0.1691683569979717, height: 0.22384151593453921}
+    }
+
+function getBBox(text: string, fontSize: number, fontFamily: string) {
+
+    function pointsToPixels(points: number) {
+        return points * (96 / 72);
+    }
+    
+    function calculateTextWidth(text: string, fontSizeInPt: number, fontFamily: string) {
+        const fontSizeInPx = pointsToPixels(fontSizeInPt);
+        const avgCharWidth = fontSizeInPx * 0.6; // Approximation
+    
+        return text.length * avgCharWidth;
+    }
+    
+    let width = calculateTextWidth(text, fontSize, 'Arial');
+    let height = pointsToPixels(fontSize); // Font height in pixels
+    
+    return {
+        width: width,
+        height: height
+    };
+}
+
 console.log("viewsmiles version 0.0.3");
 
 const cache = new Map<string, string>();
 var logged_canvas_not_found = false;
 
 function measureText(text: string, fontSize: number, fontFamily: string, lineHeight: number = 0.9) {
-    // console.log("overridden measureText");
-    
-    let temp_element = null;
+
+    //
+    const appr = getBBox(text, fontSize, fontFamily);
+
+    let temp_canvas = null;
     try {
-        temp_element = canvas.createCanvas(300, 150); // default size from chromium
+        temp_canvas = canvas.createCanvas(300, 150); // default size from chromium
     } catch (e) {
-        // we want to log this only once
+        // console.log("error:", e);
         if (!logged_canvas_not_found) {
-            // @ts-ignore
-            console.log(canvas.default.createCanvas);
-            console.log('Properties of canvas module:');
-            for (const key in canvas) {
-            if (canvas.hasOwnProperty(key)) {
-                // @ts-ignore
-                console.log(`${key}:`, canvas[key]);
-            }
-            }
-            // @ts-ignore
-            const def = canvas.default;
-            console.log('Properties of canvas.default module:');
-            for (const key in def) {
-            if (canvas.hasOwnProperty(key)) {
-                console.log(`${key}:`, def[key]);
-            }
-            }
-            
             console.log("canvas not found: disable bounding box, could lead to cut off atoms");
-            console.log("canvas:", canvas);
-            console.log("canvas.createCanvas:", canvas.createCanvas);
-            console.log("error:", e);
             logged_canvas_not_found = true;
         }
     }
-    if (!temp_element) {
-        return null;
+    const cvs = temp_canvas;
+
+
+    let log_data = false;
+    if (fontSize !== 11) {
+        log_data = true;
+        console.log("FONT SIZE IS NOT 11");
     }
-    const element = temp_element;
-    const ctx = element.getContext("2d");
+    if (!errorMap.hasOwnProperty(text)) {
+        log_data = true;
+        console.log("NO ERROR DATA FOR TEXT");
+    }
+
+    if (cvs === null) {
+        // adjust for error
+        if (errorMap.hasOwnProperty(text)) {
+        // @ts-ignore
+        const error = errorMap[text];
+        return {
+            width: appr.width * (1 + error.width),
+            height: appr.height * (1 + error.height)
+        };
+        }
+        if (log_data) {
+            console.log("real is null, but no error data for text:", text, "fontSize:", fontSize, "appr:", appr);
+        }
+        return appr;
+    }
+
+    const ctx = cvs.getContext("2d");
     ctx.font = `${fontSize}pt ${fontFamily}`;
     let textMetrics = ctx.measureText(text);
 
     let compWidth = Math.abs(textMetrics.actualBoundingBoxLeft) + Math.abs(textMetrics.actualBoundingBoxRight);
-    return {
-        'width': textMetrics.width > compWidth ? textMetrics.width : compWidth,
-        'height': (Math.abs(textMetrics.actualBoundingBoxAscent) + Math.abs(textMetrics.actualBoundingBoxAscent)) * lineHeight
+    
+    const real = {
+      width: textMetrics.width > compWidth ? textMetrics.width : compWidth,
+      height: (Math.abs(textMetrics.actualBoundingBoxAscent) + Math.abs(textMetrics.actualBoundingBoxAscent)) * lineHeight
     };
+  
+    // width error
+    // @ts-ignore
+    const width_error = (real.width - appr.width) / real.width;
+    // height error
+    // @ts-ignore
+    const height_error = (real.height - appr.height) / real.height;
+
+    // @ts-ignore
+    if (errorMap[text].width !== width_error || errorMap[text].height !== height_error)
+    {
+        log_data = true;
+        console.log("ERROR DATA IS DIFFERENT");
     }
+
+    if (log_data) {
+        console.log("fontSize:", fontSize, text + ": {width: " + width_error + ", height: " + height_error + "}, \n", "real:", real, "appr:", appr);
+    }
+    
+    
+    return real;
+
+    }
+
 
 export function activate(context: vscode.ExtensionContext) {
     const provider = vscode.languages.registerHoverProvider('python', {
@@ -77,7 +147,7 @@ export function activate(context: vscode.ExtensionContext) {
 
                         const kekule: boolean = vscode.workspace.getConfiguration('viewsmiles').get('kekule', false);
                         // console.log("kekule?", kekule);
-                        
+
                         let parseTree = null;
 
                         if (kekule) {
@@ -120,12 +190,12 @@ export function activate(context: vscode.ExtensionContext) {
                         smidrawer.SvgWrapper.measureText = measureText;
 
                         const svg: SVGElement = drawer.draw(parseTree, "svg", theme, null, false);
-
                         // so we don't need to scroll to see the whole image
                         svg.style.maxWidth = '100%';
                         svg.style.maxHeight = '100%';
 
                         // convert the svg element to a data uri
+                        // const imageUri = `data:image/svg+xml,${encodeURIComponent(svg_)}`;
                         const imageUri = `data:image/svg+xml,${encodeURIComponent(svg.outerHTML)}`;
                         // console.log(imageUri);
                         cache.set(smiles, imageUri);
