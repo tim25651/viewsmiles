@@ -22,9 +22,29 @@ Implemented simple Map cache for SMILES strings.
 Implement a approximation for the bounding boxes if canvas is not available. Still not fully functional. Canvas works if the vsix is built on the same computer and 
 all dependencies are installed. It doesn't work on other computers or via SSH.
 
+### 0.0.4
+
+The bounding box is just approximated, and canvas is disabled.
+
+### 0.0.5
+
+First try to connect to pylance. 
+```python
+# version < 0.0.5
+test = "CCO"
+# The molecule is displayed in the hover window if we hover "CCO" but not if we hover "test"
+# version >= 0.0.5
+test = "CCO"
+test
+# The molecule is displayed in the hover window if we hover "CCO" and also if we hover "test" (either on declaration or on usage)
+```
+
+To also access Literals and not just the 
 **Enjoy!**
 
 ## TODO
+- Alternative: make seperate version without any canvas - only with the approximation
+    - Would need a larger errorMap and more tests for different SVG sizes
 - Canvas doesn't work on other computers. To fix this everything we needs canvas in smiles-drawer/src/SvgDrawer.js is commented out. But so, the bounding box of text (each non-carbon atom) is not calculated correctly. This can lead to a large padding or little parts cut off (no CCCN -> doesnt show the H-atoms). This is a bug that needs to be fixed. ("canvas": "^2.11.2")
     - Even with workaround of .node packaging (see esbuild.js, commented parts)
 - 2nd quick and dirty fix is the commenting of require.resolve which can't find the path anymore after bundling. As it's currently not used, it can be commented out.
